@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource postgresql {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                           Int             @id @default(autoincrement())
+  name                         String?
+  email                        String?         @unique
+  password                     String?
+  phone                        String?
+  profile_image_filesize       Int?
+  profile_image_extension      String?
+  profile_image_width          Int?
+  profile_image_height         Int?
+  profile_image_mode           String?
+  profile_image_id             String?
+  address                      Address?        @relation("Address_user")
+  notifications                Notification[]  @relation("Notification_customer")
+  orders                       Order[]         @relation("Order_customer")
+  reviews                      Review[]        @relation("Review_customer")
+  from_PaymentMethod_customers PaymentMethod[] @relation("PaymentMethod_customers_many")
+}
+
+model Product {
+  id                   Int               @id @default(autoincrement())
+  title                String?
+  description          String?
+  price                Decimal?          @postgresql.Decimal(18, 4)
+  created_at           DateTime?
+  updated_at           DateTime?
+  deleted_at           DateTime?
+  is_deleted           String?
+  status               String?
+  quantitiy            Int?
+  manufacturerId       Int?              @map("manufacturer")
+  products_orderd      Int?
+  image_filesize       Int?
+  image_extension      String?
+  image_width          Int?
+  image_height         Int?
+  image_mode           String?
+  image_id             String?
+  is_discounted        String?
+  is_taxed             String?
+  rating               Int?
+  categoryId           Int?              @map("category")
+  product_typeId       Int?              @map("product_type")
+  product_attributesId Int?              @unique @map("product_attributes")
+  category             Category?         @relation("Product_category", fields: [categoryId], references: [id])
+  manufacturer         Manufacturer?     @relation("Product_manufacturer", fields: [manufacturerId], references: [id])
+  product_attributes   ProductAttribute? @relation("Product_product_attributes", fields: [product_attributesId], references: [id])
+  product_type         ProductType?      @relation("Product_product_type", fields: [product_typeId], references: [id])
+  reviews              Review[]          @relation("Review_product")
+  discount             Discount[]        @relation("Discount_products_Product_discount")
+  tags                 Tag[]             @relation("Product_tags_Tag_products")
+  tax                  Tax[]             @relation("Product_tax_Tax_products")
+
+  @@index([categoryId], name: "Product.category_index")
+  @@index([manufacturerId], name: "Product.manufacturer_index")
+  @@index([product_typeId], name: "Product.product_type_index")
+}
+
+model Tag {
+  id         Int       @id @default(autoincrement())
+  created_at DateTime?
+  updated_at DateTime?
+  deleted_at DateTime?
+  is_deleted String?
+  name       String?
+  products   Product[] @relation("Product_tags_Tag_products")
+}
+
+model Review {
+  id          Int       @id @default(autoincrement())
+  created_at  DateTime?
+  updated_at  DateTime?
+  deleted_at  DateTime?
+  is_deleted  String?
+  review_text String?
+  productId   Int?      @map("product")
+  customerId  Int?      @map("customer")
+  customer    User?     @relation("Review_customer", fields: [customerId], references: [id])
+  product     Product?  @relation("Review_product", fields: [productId], references: [id])
+
+  @@index([customerId], name: "Review.customer_index")
+  @@index([productId], name: "Review.product_index")
+}
+
+model Manufacturer {
+  id              Int       @id @default(autoincrement())
+  created_at      DateTime?
+  updated_at      DateTime?
+  deleted_at      DateTime?
+  is_deleted      String?
+  image_filesize  Int?
+  image_extension String?
+  image_width     Int?
+  image_height    Int?
+  image_mode      String?
+  image_id        String?
+  name            String?
+  products        Product[] @relation("Product_manufacturer")
+}
+
+model Order {
+  id                      Int             @id @default(autoincrement())
+  created_at              DateTime?
+  updated_at              DateTime?
+  deleted_at              DateTime?
+  is_deleted              String?
+  order_total             Float?
+  billing_postcode        String?
+  billing_city            String?
+  billing_country         String?
+  delivery_street_address String?
+  delivery_name           String?
+  payment_methodId        Int?            @map("payment_method")
+  status                  String?
+  customerId              Int?            @map("customer")
+  customer                User?           @relation("Order_customer", fields: [customerId], references: [id])
+  payment_method          PaymentMethod?  @relation("Order_payment_method", fields: [payment_methodId], references: [id])
+  orders_product          OrdersProduct[] @relation("Order_orders_product_many")
+
+  @@index([customerId], name: "Order.customer_index")
+  @@index([payment_methodId], name: "Order.payment_method_index")
+}
+
+model OrdersProduct {
+  id                        Int      @id @default(autoincrement())
+  product_title             String?
+  product_quantity          Int?
+  product_price             Decimal? @postgresql.Decimal(18, 4)
+  products_tax              Decimal? @postgresql.Decimal(18, 4)
+  products_final_price      Decimal? @postgresql.Decimal(18, 4)
+  from_Order_orders_product Order[]  @relation("Order_orders_product_many")
+}
+
+model Category {
+  id              Int       @id @default(autoincrement())
+  name            String?
+  num_of_products Int?
+  image_filesize  Int?
+  image_extension String?
+  image_width     Int?
+  image_height    Int?
+  image_mode      String?
+  image_id        String?
+  created_at      DateTime?
+  updated_at      DateTime?
+  deleted_at      DateTime?
+  is_deleted      String?
+  description     String?
+  products        Product[] @relation("Product_category")
+}
+
+model Notification {
+  id           Int       @id @default(autoincrement())
+  notification String?
+  customerId   Int?      @map("customer")
+  created_at   DateTime?
+  updated_at   DateTime?
+  deleted_at   DateTime?
+  is_deleted   String?
+  is_seen      String?
+  customer     User?     @relation("Notification_customer", fields: [customerId], references: [id])
+
+  @@index([customerId], name: "Notification.customer_index")
+}
+
+model Tax {
+  id              Int       @id @default(autoincrement())
+  created_at      DateTime?
+  updated_at      DateTime?
+  deleted_at      DateTime?
+  is_deleted      String?
+  tax_name        String?
+  tax_rate        Decimal?  @postgresql.Decimal(18, 4)
+  tax_description String?
+  products        Product[] @relation("Product_tax_Tax_products")
+}
+
+model Discount {
+  id                   Int       @id @default(autoincrement())
+  created_at           DateTime?
+  updated_at           DateTime?
+  deleted_at           DateTime?
+  is_deleted           String?
+  discount_name        String?
+  discount_value       Decimal?  @postgresql.Decimal(18, 4)
+  discount_description String?
+  products             Product[] @relation("Discount_products_Product_discount")
+}
+
+model ProductType {
+  id                                     Int                    @id @default(autoincrement())
+  created_at                             DateTime?
+  updated_at                             DateTime?
+  deleted_at                             DateTime?
+  is_deleted                             String?
+  product_type_name                      String?
+  products                               Product[]              @relation("Product_product_type")
+  product_type_attributes                ProductTypeAttribute[] @relation("ProductType_product_type_attributes_many")
+  from_ProductTypeAttribute_product_type ProductTypeAttribute[] @relation("ProductTypeAttribute_product_type_many")
+}
+
+model ProductAttribute {
+  id         Int       @id @default(autoincrement())
+  created_at DateTime?
+  updated_at DateTime?
+  deleted_at DateTime?
+  is_deleted String?
+  size       String?
+  material   String?
+  color      String?
+  dimensions String?
+  weight     Decimal?  @postgresql.Decimal(18, 4)
+  packaging  String?
+  design     String?
+  product    Product?  @relation("Product_product_attributes")
+}
+
+model AttributeType {
+  id                            Int         @id @default(autoincrement())
+  created_at                    DateTime?
+  updated_at                    DateTime?
+  deleted_at                    DateTime?
+  is_deleted                    String?
+  attribute_type                String?
+  from_Attribute_attribute_type Attribute[] @relation("Attribute_attribute_type")
+  attribute                     Attribute[] @relation("AttributeType_attribute_many")
+}
+
+model ProductTypeAttribute {
+  id                                       Int           @id @default(autoincrement())
+  created_at                               DateTime?
+  updated_at                               DateTime?
+  deleted_at                               DateTime?
+  is_deleted                               String?
+  attributeId                              Int?          @map("attribute")
+  attribute                                Attribute?    @relation("ProductTypeAttribute_attribute", fields: [attributeId], references: [id])
+  from_ProductType_product_type_attributes ProductType[] @relation("ProductType_product_type_attributes_many")
+  product_type                             ProductType[] @relation("ProductTypeAttribute_product_type_many")
+
+  @@index([attributeId], name: "ProductTypeAttribute.attribute_index")
+}
+
+model PaymentMethod {
+  id             Int       @id @default(autoincrement())
+  created_at     DateTime?
+  updated_at     DateTime?
+  deleted_at     DateTime?
+  is_deleted     String?
+  payment_method String?
+  currency       String?
+  orders         Order[]   @relation("Order_payment_method")
+  customers      User[]    @relation("PaymentMethod_customers_many")
+}
+
+model Address {
+  id          Int       @id @default(autoincrement())
+  postal_code Int?
+  street      String?
+  city        String?
+  country     String?
+  userId      Int?      @unique @map("user")
+  created_at  DateTime?
+  updated_at  DateTime?
+  deleted_at  DateTime?
+  is_deleted  String?
+  user        User?     @relation("Address_user", fields: [userId], references: [id])
+}
+
+model Attribute {
+  id                                  Int                    @id @default(autoincrement())
+  created_at                          DateTime?
+  updated_at                          DateTime?
+  deleted_at                          DateTime?
+  is_deleted                          String?
+  attribute_typeId                    Int?                   @map("attribute_type")
+  attribute                           String?
+  attribute_type                      AttributeType?         @relation("Attribute_attribute_type", fields: [attribute_typeId], references: [id])
+  from_ProductTypeAttribute_attribute ProductTypeAttribute[] @relation("ProductTypeAttribute_attribute")
+  from_AttributeType_attribute        AttributeType[]        @relation("AttributeType_attribute_many")
+
+  @@index([attribute_typeId], name: "Attribute.attribute_type_index")
+}
