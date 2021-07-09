@@ -4,6 +4,7 @@ import fs from 'fs';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+import initRoutes from './routes/initRoutes';
 
 (async () => {
     config();
@@ -21,6 +22,8 @@ import path from 'path';
         const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
         app.use(morgan('combined', { stream: accessLogStream }));
     }
+
+    initRoutes(app);
 
     app.listen(port, () => console.log(`Server is running on port ${port} ...`));
 })();
