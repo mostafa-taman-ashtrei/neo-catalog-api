@@ -39,13 +39,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getProductById = exports.getAllProducts = void 0;
 var client_1 = require("@prisma/client");
 var prisma = new client_1.PrismaClient();
+var relatedRecords = {
+    product_type: true,
+    product_attributes: true,
+    manufacturer: true,
+    tax: true,
+    discount: true,
+    category: true,
+    reviews: true,
+    tags: true,
+};
 var getAllProducts = function (_, res) { return __awaiter(void 0, void 0, void 0, function () {
     var data, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, prisma.product.findMany()];
+                return [4 /*yield*/, prisma.product.findMany({
+                        include: relatedRecords,
+                    })];
             case 1:
                 data = _a.sent();
                 console.log(data);
@@ -65,7 +77,10 @@ var getProductById = function (req, res) { return __awaiter(void 0, void 0, void
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                return [4 /*yield*/, prisma.product.findUnique({ where: { id: Number(req.params.id) } })];
+                return [4 /*yield*/, prisma.product.findUnique({
+                        where: { id: Number(req.params.id) },
+                        include: relatedRecords,
+                    })];
             case 1:
                 data = _a.sent();
                 console.log(data);
