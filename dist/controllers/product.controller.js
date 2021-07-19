@@ -48,6 +48,7 @@ var relatedRecords = {
     category: true,
     reviews: true,
     tags: true,
+    product_sku: true,
 };
 var getAllProducts = function (_, res) { return __awaiter(void 0, void 0, void 0, function () {
     var data, e_1;

@@ -12,6 +12,7 @@ const relatedRecords = {
     category: true,
     reviews: true,
     tags: true,
+    product_sku: true,
 };
 
 export const getAllProducts = async (_: Request, res: Response) => {

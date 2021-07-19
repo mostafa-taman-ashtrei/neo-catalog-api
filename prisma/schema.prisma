@@ -12,17 +12,17 @@ model User {
   name                         String?
   email                        String?         @unique
   password                     String?
+  address                      Address?        @relation("Address_user")
   phone                        String?
+  reviews                      Review[]        @relation("Review_customer")
+  orders                       Order[]         @relation("Order_customer")
   profile_image_filesize       Int?
   profile_image_extension      String?
   profile_image_width          Int?
   profile_image_height         Int?
   profile_image_mode           String?
   profile_image_id             String?
-  address                      Address?        @relation("Address_user")
   notifications                Notification[]  @relation("Notification_customer")
-  orders                       Order[]         @relation("Order_customer")
-  reviews                      Review[]        @relation("Review_customer")
   from_PaymentMethod_customers PaymentMethod[] @relation("PaymentMethod_customers_many")
 }
 
@@ -37,8 +37,10 @@ model Product {
   is_deleted           String?
   status               String?
   quantitiy            Int?
+  manufacturer         Manufacturer?     @relation("Product_manufacturer", fields: [manufacturerId], references: [id])
   manufacturerId       Int?              @map("manufacturer")
   products_orderd      Int?
+  reviews              Review[]          @relation("Review_product")
   image_filesize       Int?
   image_extension      String?
   image_width          Int?
@@ -46,23 +48,22 @@ model Product {
   image_mode           String?
   image_id             String?
   is_discounted        String?
-  is_taxed             String?
-  rating               Int?
-  categoryId           Int?              @map("category")
-  product_typeId       Int?              @map("product_type")
-  product_attributesId Int?              @unique @map("product_attributes")
-  category             Category?         @relation("Product_category", fields: [categoryId], references: [id])
-  manufacturer         Manufacturer?     @relation("Product_manufacturer", fields: [manufacturerId], references: [id])
-  product_attributes   ProductAttribute? @relation("Product_product_attributes", fields: [product_attributesId], references: [id])
-  product_type         ProductType?      @relation("Product_product_type", fields: [product_typeId], references: [id])
-  reviews              Review[]          @relation("Review_product")
   discount             Discount[]        @relation("Discount_products_Product_discount")
-  tags                 Tag[]             @relation("Product_tags_Tag_products")
+  is_taxed             String?
   tax                  Tax[]             @relation("Product_tax_Tax_products")
+  rating               Int?
+  category             Category?         @relation("Product_category", fields: [categoryId], references: [id])
+  categoryId           Int?              @map("category")
+  tags                 Tag[]             @relation("Product_tags_Tag_products")
+  product_type         ProductType?      @relation("Product_product_type", fields: [product_typeId], references: [id])
+  product_typeId       Int?              @map("product_type")
+  product_attributes   ProductAttribute? @relation("Product_product_attributes", fields: [product_attributesId], references: [id])
+  product_attributesId Int?              @unique @map("product_attributes")
+  product_sku          ProductSku[]      @relation("ProductSku_products")
 
-  @@index([categoryId], name: "Product.category_index")
-  @@index([manufacturerId], name: "Product.manufacturer_index")
-  @@index([product_typeId], name: "Product.product_type_index")
+  @@index([manufacturerId])
+  @@index([categoryId])
+  @@index([product_typeId])
 }
 
 model Tag {
@@ -82,13 +83,13 @@ model Review {
   deleted_at  DateTime?
   is_deleted  String?
   review_text String?
-  productId   Int?      @map("product")
-  customerId  Int?      @map("customer")
-  customer    User?     @relation("Review_customer", fields: [customerId], references: [id])
   product     Product?  @relation("Review_product", fields: [productId], references: [id])
+  productId   Int?      @map("product")
+  customer    User?     @relation("Review_customer", fields: [customerId], references: [id])
+  customerId  Int?      @map("customer")
 
-  @@index([customerId], name: "Review.customer_index")
-  @@index([productId], name: "Review.product_index")
+  @@index([productId])
+  @@index([customerId])
 }
 
 model Manufacturer {
@@ -119,15 +120,15 @@ model Order {
   billing_country         String?
   delivery_street_address String?
   delivery_name           String?
+  payment_method          PaymentMethod?  @relation("Order_payment_method", fields: [payment_methodId], references: [id])
   payment_methodId        Int?            @map("payment_method")
   status                  String?
-  customerId              Int?            @map("customer")
   customer                User?           @relation("Order_customer", fields: [customerId], references: [id])
-  payment_method          PaymentMethod?  @relation("Order_payment_method", fields: [payment_methodId], references: [id])
+  customerId              Int?            @map("customer")
   orders_product          OrdersProduct[] @relation("Order_orders_product_many")
 
-  @@index([customerId], name: "Order.customer_index")
-  @@index([payment_methodId], name: "Order.payment_method_index")
+  @@index([payment_methodId])
+  @@index([customerId])
 }
 
 model OrdersProduct {
@@ -161,15 +162,15 @@ model Category {
 model Notification {
   id           Int       @id @default(autoincrement())
   notification String?
+  customer     User?     @relation("Notification_customer", fields: [customerId], references: [id])
   customerId   Int?      @map("customer")
   created_at   DateTime?
   updated_at   DateTime?
   deleted_at   DateTime?
   is_deleted   String?
   is_seen      String?
-  customer     User?     @relation("Notification_customer", fields: [customerId], references: [id])
 
-  @@index([customerId], name: "Notification.customer_index")
+  @@index([customerId])
 }
 
 model Tax {
@@ -203,8 +204,8 @@ model ProductType {
   deleted_at                             DateTime?
   is_deleted                             String?
   product_type_name                      String?
-  products                               Product[]              @relation("Product_product_type")
   product_type_attributes                ProductTypeAttribute[] @relation("ProductType_product_type_attributes_many")
+  products                               Product[]              @relation("Product_product_type")
   from_ProductTypeAttribute_product_type ProductTypeAttribute[] @relation("ProductTypeAttribute_product_type_many")
 }
 
@@ -230,9 +231,9 @@ model AttributeType {
   updated_at                    DateTime?
   deleted_at                    DateTime?
   is_deleted                    String?
+  attribute                     Attribute[] @relation("AttributeType_attribute_many")
   attribute_type                String?
   from_Attribute_attribute_type Attribute[] @relation("Attribute_attribute_type")
-  attribute                     Attribute[] @relation("AttributeType_attribute_many")
 }
 
 model ProductTypeAttribute {
@@ -241,12 +242,12 @@ model ProductTypeAttribute {
   updated_at                               DateTime?
   deleted_at                               DateTime?
   is_deleted                               String?
-  attributeId                              Int?          @map("attribute")
-  attribute                                Attribute?    @relation("ProductTypeAttribute_attribute", fields: [attributeId], references: [id])
-  from_ProductType_product_type_attributes ProductType[] @relation("ProductType_product_type_attributes_many")
   product_type                             ProductType[] @relation("ProductTypeAttribute_product_type_many")
+  attribute                                Attribute?    @relation("ProductTypeAttribute_attribute", fields: [attributeId], references: [id])
+  attributeId                              Int?          @map("attribute")
+  from_ProductType_product_type_attributes ProductType[] @relation("ProductType_product_type_attributes_many")
 
-  @@index([attributeId], name: "ProductTypeAttribute.attribute_index")
+  @@index([attributeId])
 }
 
 model PaymentMethod {
@@ -256,9 +257,9 @@ model PaymentMethod {
   deleted_at     DateTime?
   is_deleted     String?
   payment_method String?
-  currency       String?
-  orders         Order[]   @relation("Order_payment_method")
   customers      User[]    @relation("PaymentMethod_customers_many")
+  orders         Order[]   @relation("Order_payment_method")
+  currency       String?
 }
 
 model Address {
@@ -267,12 +268,12 @@ model Address {
   street      String?
   city        String?
   country     String?
+  user        User?     @relation("Address_user", fields: [userId], references: [id])
   userId      Int?      @unique @map("user")
   created_at  DateTime?
   updated_at  DateTime?
   deleted_at  DateTime?
   is_deleted  String?
-  user        User?     @relation("Address_user", fields: [userId], references: [id])
 }
 
 model Attribute {
@@ -281,11 +282,36 @@ model Attribute {
   updated_at                          DateTime?
   deleted_at                          DateTime?
   is_deleted                          String?
+  attribute_type                      AttributeType?         @relation("Attribute_attribute_type", fields: [attribute_typeId], references: [id])
   attribute_typeId                    Int?                   @map("attribute_type")
   attribute                           String?
-  attribute_type                      AttributeType?         @relation("Attribute_attribute_type", fields: [attribute_typeId], references: [id])
-  from_ProductTypeAttribute_attribute ProductTypeAttribute[] @relation("ProductTypeAttribute_attribute")
   from_AttributeType_attribute        AttributeType[]        @relation("AttributeType_attribute_many")
+  from_ProductTypeAttribute_attribute ProductTypeAttribute[] @relation("ProductTypeAttribute_attribute")
 
-  @@index([attribute_typeId], name: "Attribute.attribute_type_index")
+  @@index([attribute_typeId])
+}
+
+model ProductSku {
+  id            Int                   @id @default(autoincrement())
+  created_at    DateTime?
+  updated_at    DateTime?
+  deleted_at    DateTime?
+  is_deleted    String?
+  products      Product?              @relation("ProductSku_products", fields: [productsId], references: [id])
+  productsId    Int?                  @map("products")
+  sku           String?
+  sku_attribute ProductSkuAttribute[] @relation("ProductSku_sku_attribute_ProductSkuAttribute_product_sku")
+
+  @@index([productsId])
+}
+
+model ProductSkuAttribute {
+  id          Int          @id @default(autoincrement())
+  created_at  DateTime?
+  updated_at  DateTime?
+  deleted_at  DateTime?
+  is_deleted  String?
+  product_sku ProductSku[] @relation("ProductSku_sku_attribute_ProductSkuAttribute_product_sku")
+  name        String?
+  value       String?
 }
