@@ -33,5 +33,17 @@
         "camelcase": "off",
         "no-case-declarations": "off",
         "import/prefer-default-export": 0
+    },
+    "settings": {
+        "import/resolver": {
+            "node": {
+                "extensions": [
+                    ".js",
+                    ".jsx",
+                    ".ts",
+                    ".tsx"
+                ]
+            }
+        }
     }
 }
